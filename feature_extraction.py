@@ -10,7 +10,7 @@ def first_capital(s):
     return s[0].isupper()
 
 def syllables_capital(s):
-    s = s.replace('_').split('_')
+    s = s.strip('_').split('_')
     flag = True
     for x in s:
         flag *= first_capital(x)
@@ -18,11 +18,10 @@ def syllables_capital(s):
 
 def has_keywords(s):
     s = s.lower()
-    for key in ['nghị_định', 'quy￿ết_định', 'lu￿ật', 'th￿ông_tư', 'ph￿áp_l￿ệnh', 'nghị_quy￿ết', 'hi￿ến_ph￿áp']:
+    for key in ['nghị_định', 'quyết_định', 'luật', 'thông_tư', 'pháp_lệnh', 'nghị_quyết', 'hiến_pháp']:
         if re.search(key, s):
             return True
     return False
-
 def extract(tok_list):
     feat = []
     for tok in tok_list:
@@ -60,10 +59,8 @@ def align_bpe_to_words(roberta, bpe_tokens: torch.LongTensor, other_tokens: List
     """
     assert bpe_tokens.dim() == 1
     assert bpe_tokens[0] == 0
-
     def clean(text):
         return text.strip()
-
     # remove whitespaces to simplify alignment
     bpe_tokens = [roberta.task.source_dictionary.string([x]) for x in bpe_tokens]
     bpe_tokens = [clean(roberta.bpe.decode(x) if x not in {'<s>', ''} else x) for x in bpe_tokens]
@@ -75,20 +72,27 @@ def align_bpe_to_words(roberta, bpe_tokens: torch.LongTensor, other_tokens: List
 
     # create alignment from every word to a list of BPE tokens
     alignment = []
+    # print(bpe_tokens)
+    # print(other_tokens, '\n')
     bpe_toks = filter(lambda item: item[1] != '', enumerate(bpe_tokens, start=1))
     j, bpe_tok = next(bpe_toks)
     for other_tok in other_tokens:
+        if other_tok == '':
+            print("empty")
         bpe_indices = []
         while True:
-            # print(bpe_tok, other_tok)
+            if bpe_tok == '<unk>':
+                unk_tok = roberta.bpe.encode(other_tok).split()[0].replace('@@', '')
+                other_tok = other_tok[len(unk_tok):]
+                try:
+                    j, bpe_tok = next(bpe_toks)
+                except StopIteration:
+                    j, bpe_tok = None, None
             if other_tok.startswith(bpe_tok):
                 bpe_indices.append(j)
                 other_tok = other_tok[len(bpe_tok):]
                 try:
                     j, bpe_tok = next(bpe_toks)
-                    if bpe_tok == '<unk>':
-                        j, bpe_tok = next(bpe_toks)
-                        other_tok = ''
                         # break
                 except StopIteration:
                     j, bpe_tok = None, None
@@ -132,12 +136,13 @@ def align_features_to_words(roberta, features, alignment):
     for j in range(largest_j + 1, len(features)):
         output.append(weighted_features[j])
     output = torch.stack(output)
-    # print(torch.abs(output.sum(dim=0) - features.sum(dim=0)) )
     return output
 
 def extract_bert(line):
     bpe_tokens = phobert.encode(line)
     alignment = align_bpe_to_words(phobert, bpe_tokens, line.split())
+    if len(bpe_tokens) > 256:
+        return np.zeros((len(line.split()),756))
     last_layer_features = phobert.extract_features(bpe_tokens).squeeze(0)
     feat = align_features_to_words(phobert, last_layer_features, alignment)
     return feat.detach().numpy()[1:-1]
