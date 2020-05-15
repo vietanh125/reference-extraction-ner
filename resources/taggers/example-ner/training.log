@@ -1,0 +1,54 @@
+2020-04-04 22:24:27,222 ----------------------------------------------------------------------------------------------------
+2020-04-04 22:24:27,223 Model: "SequenceTagger(
+  (embeddings): StackedEmbeddings(
+    (list_embedding_0): WordEmbeddings('glove')
+    (list_embedding_1): CharacterEmbeddings(
+      (char_embedding): Embedding(275, 25)
+      (char_rnn): LSTM(25, 25, bidirectional=True)
+    )
+    (list_embedding_2): FlairEmbeddings(
+      (lm): LanguageModel(
+        (drop): Dropout(p=0.05, inplace=False)
+        (encoder): Embedding(300, 100)
+        (rnn): LSTM(100, 2048)
+        (decoder): Linear(in_features=2048, out_features=300, bias=True)
+      )
+    )
+    (list_embedding_3): FlairEmbeddings(
+      (lm): LanguageModel(
+        (drop): Dropout(p=0.05, inplace=False)
+        (encoder): Embedding(300, 100)
+        (rnn): LSTM(100, 2048)
+        (decoder): Linear(in_features=2048, out_features=300, bias=True)
+      )
+    )
+  )
+  (word_dropout): WordDropout(p=0.05)
+  (locked_dropout): LockedDropout(p=0.5)
+  (embedding2nn): Linear(in_features=4246, out_features=4246, bias=True)
+  (rnn): LSTM(4246, 256, batch_first=True, bidirectional=True)
+  (linear): Linear(in_features=512, out_features=40, bias=True)
+  (beta): 1.0
+  (weights): None
+  (weight_tensor) None
+)"
+2020-04-04 22:24:27,223 ----------------------------------------------------------------------------------------------------
+2020-04-04 22:24:27,223 Corpus: "Corpus: 4213 train + 602 dev + 1204 test sentences"
+2020-04-04 22:24:27,223 ----------------------------------------------------------------------------------------------------
+2020-04-04 22:24:27,223 Parameters:
+2020-04-04 22:24:27,223  - learning_rate: "0.1"
+2020-04-04 22:24:27,223  - mini_batch_size: "2"
+2020-04-04 22:24:27,223  - patience: "3"
+2020-04-04 22:24:27,223  - anneal_factor: "0.5"
+2020-04-04 22:24:27,223  - max_epochs: "150"
+2020-04-04 22:24:27,223  - shuffle: "True"
+2020-04-04 22:24:27,224  - train_with_dev: "False"
+2020-04-04 22:24:27,224  - batch_growth_annealing: "False"
+2020-04-04 22:24:27,224 ----------------------------------------------------------------------------------------------------
+2020-04-04 22:24:27,224 Model training base path: "resources\taggers\example-ner"
+2020-04-04 22:24:27,224 ----------------------------------------------------------------------------------------------------
+2020-04-04 22:24:27,224 Device: cuda:0
+2020-04-04 22:24:27,224 ----------------------------------------------------------------------------------------------------
+2020-04-04 22:24:27,224 Embeddings storage mode: gpu
+2020-04-04 22:24:27,225 ----------------------------------------------------------------------------------------------------
+2020-04-04 22:32:29,751 epoch 1 - iter 210/2107 - loss 54.80982159 - samples/sec: 0.87
