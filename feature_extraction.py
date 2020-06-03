@@ -1,5 +1,9 @@
 import re
 import numpy as np
+import fasttext
+model = fasttext.load_model("cc.vi.300.bin")
+from gensim.models import KeyedVectors
+word2vec_model = KeyedVectors.load_word2vec_format('baomoi.vn.model.bin', binary=True)
 def contains_digit(s):
     return bool(re.search(r'\d', s))
 
@@ -25,8 +29,11 @@ def has_keywords(s):
 def extract(tok_list):
     feat = []
     for tok in tok_list:
-        feat.append([contains_digit(tok), contains_special_characters(tok), first_capital(tok), syllables_capital(tok), has_keywords(tok)])
-    return np.array(feat, dtype='int')
+        ftext = model[tok]
+        w2v = word2vec_model[tok]
+        rules = np.array([contains_digit(tok), contains_special_characters(tok), first_capital(tok), syllables_capital(tok), has_keywords(tok)])
+        feat.append(np.hstack((ftext, w2v, rules)))
+    return np.array(feat)
 
 import torch
 from collections import Counter
