@@ -7,19 +7,8 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 s1 = u'ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ'
 s0 = u'AAAAEEEIIOOOOUUYaaaaeeeiioooouuyAaDdIiUuOoUuAaAaAaAaAaAaAaAaAaAaAaAaEeEeEeEeEeEeEeEeIiIiOoOoOoOoOoOoOoOoOoOoOoOoUuUuUuUuUuUuUuYyYyYyYy'
-# from fairseq.models.roberta import RobertaModel
-# phobert = RobertaModel.from_pretrained('PhoBERT_large_fairseq', checkpoint_file='model.pt')
-# phobert.eval()  # disable dropout (or leave in train mode to finetune)
-# # from vncorenlp import VnCoreNLP
-# # rdrsegmenter = VnCoreNLP("vncorenlp/VnCoreNLP-1.1.1.jar", annotators="wseg", max_heap_size='-Xmx500m')
-# # Incorporate the BPE encoder into PhoBERT-base
-# from fairseq.data.encoders.fastbpe import fastBPE
-# from fairseq import options
-# parser = options.get_preprocessing_parser()
-# parser.add_argument('--bpe-codes', type=str, help='path to fastBPE BPE', default="PhoBERT_large_fairseq/bpe.codes")
-# args = parser.parse_args()
-# phobert.bpe = fastBPE(args) #Incorporate the BPE encoder into PhoBERT
 from feature_extraction import extract_bert, extract
+
 
 def remove_accents(input_str):
     s = ''
@@ -64,7 +53,7 @@ def gen_label(tokenized_list):
                 label.append(l)
 
         else:
-            if token[1] == '/':
+            if token[0:2] == '</':
                 stack.pop()
             else:
                 stack.append(remove_accents(token[1:-1]))
@@ -128,11 +117,24 @@ def read(path):
         thresh -= 1
         if thresh > 0 or len(d) == 0:
             continue
-        d = re.sub(r'<.*?>', '', d).split()
+        d = re.sub(".\s\)", "", d).replace('<', ' <').replace('>', '> ')
+        d = re.sub(">", "> ", d)
+        d = re.sub(r"(<[^><\s]+)", r"\1>", d)
+        d = re.sub(">>", ">", d)
+        d = re.sub('<<', '<', d)
+        d = re.sub("</", " </", d).split()
+#         d = d.split()
         sentence, label = gen_label(d)
         sentence = remove_tags(sentence)
+        sentence = re.sub(r'<.*?>', '', ' '.join(sentence)).split()
         sentence = np.array(sentence)
         label = np.array(label)
+#         print(np.unique(label))
+        if label.shape != sentence.shape:
+            print(len(label), len(sentence))
+            print(label)
+            print(sentence)
+            print(data[i])
         assert label.shape == sentence.shape
         list_sent = windowing(sentence)
         list_label = windowing(label)
@@ -163,23 +165,22 @@ def read(path):
             sentence = np.append(sentence, manual_feat, 1)
             pad_len = SENT_LENGTH - len(l)
             l += ['pad'] * (pad_len)
-            l = np.array(l)
+            l = np.array(l, dtype='<U12')
+            
             sentence = np.append(sentence, np.zeros((pad_len, sentence.shape[1])), axis=0)
             X.append(sentence)
             y.append(l)
         #print(sentence.shape, label.shape, '\n')
-
-    return np.array(X), np.array(y)
+    return np.array(X), np.array(y, dtype='<U12')
 path = "new_data/"
-FJoin = os.path.join
+# FJoin = os.path.join
 files = os.listdir(path)
 for f in files:
     X, y = read(path + f)
-    print(X.shape, y.shape)
+    print(X.shape, y.shape, f)
     np.save("X_{}.npy".format(f.split('.')[0]), X)
     np.save("y_{}.npy".format(f.split('.')[0]), y)
     del X, y
-    print(split_count)
 
 
 # print(X.shape, y.shape)
@@ -207,4 +208,5 @@ for f in files:
 import torch
 
 # Load PhoBERT-base in fairseq
+
 

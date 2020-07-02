@@ -1,0 +1,4 @@
+*.npy
+*.h5
+resources
+PhoBERT_large_fairseq
