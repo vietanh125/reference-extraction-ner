@@ -157,7 +157,7 @@ hpack==3.0.0
 hstspreload==2020.2.5
 html5lib==1.0.1
 httpcore==0.3.0
-httplib2==0.14.0
+httplib2==0.18.0
 httptools==0.0.13
 httpx==0.9.3
 hug==2.5.3
