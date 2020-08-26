@@ -1,0 +1,17 @@
+.idea
+__pycache__
+.ipynb_checkpoints
+*.npy
+*.h5
+wandb
+apex
+cache_dir
+BERTweet_base_transformers
+covid
+outputs
+resources
+*.bin
+extract_data
+PhoBERT_base_fairseq
+runs
+.git

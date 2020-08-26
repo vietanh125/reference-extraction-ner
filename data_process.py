@@ -7,19 +7,8 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 s1 = u'ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ'
 s0 = u'AAAAEEEIIOOOOUUYaaaaeeeiioooouuyAaDdIiUuOoUuAaAaAaAaAaAaAaAaAaAaAaAaEeEeEeEeEeEeEeEeIiIiOoOoOoOoOoOoOoOoOoOoOoOoUuUuUuUuUuUuUuYyYyYyYy'
-from fairseq.models.roberta import RobertaModel
-phobert = RobertaModel.from_pretrained('PhoBERT_large_fairseq', checkpoint_file='model.pt')
-phobert.eval()  # disable dropout (or leave in train mode to finetune)
-# from vncorenlp import VnCoreNLP
-# rdrsegmenter = VnCoreNLP("vncorenlp/VnCoreNLP-1.1.1.jar", annotators="wseg", max_heap_size='-Xmx500m')
-# Incorporate the BPE encoder into PhoBERT-base
-from fairseq.data.encoders.fastbpe import fastBPE
-from fairseq import options
-parser = options.get_preprocessing_parser()
-parser.add_argument('--bpe-codes', type=str, help='path to fastBPE BPE', default="PhoBERT_large_fairseq/bpe.codes")
-args = parser.parse_args()
-phobert.bpe = fastBPE(args) #Incorporate the BPE encoder into PhoBERT
-from feature_extraction import extract_bert, extract
+from feature_extraction import extract_bert, extract, sent_to_char
+
 
 def remove_accents(input_str):
     s = ''
@@ -64,7 +53,7 @@ def gen_label(tokenized_list):
                 label.append(l)
 
         else:
-            if token[1] == '/':
+            if token[0:2] == '</':
                 stack.pop()
             else:
                 stack.append(remove_accents(token[1:-1]))
@@ -108,106 +97,77 @@ count = 0
 thresh = 0
 SENT_LENGTH = 128
 split_count = 0
+
+def windowing(data_array):
+    trim_len = int(len(data_array) / SENT_LENGTH) * SENT_LENGTH
+    right_most = data_array[-min(SENT_LENGTH, len(data_array)):].tolist()
+    trimmed = np.reshape(data_array[:trim_len], (-1, SENT_LENGTH)).tolist()
+    trimmed.append(right_most)
+    return trimmed
+
 from tqdm import tqdm
 def read(path):
     global count, thresh, split_count
     X = []
     y = []
+    sents = []
     file = open(path, "r")
     data = file.read().split('.')
     for i in tqdm(range(len(data))):
         d = data[i]
-        count += 1
-        if count < thresh:
+        thresh -= 1
+        if thresh > 0 or len(d) == 0:
             continue
-        d = re.sub(".\s\)", "", d).replace('<', ' <').replace('>', '> ').split()
-        # d = re.sub(">", "> ", d)
-        # d = re.sub(r"(<[^><\s]+)", r"\1>", d)
-        # d = re.sub(">>", ">", d)
-        # d = re.sub("</", " </", d).split()
-
+        d = re.sub(".\s\)", "", d).replace('<', ' <').replace('>', '> ')
+        d = re.sub(">", "> ", d)
+        d = re.sub(r"(<[^><\s]+)", r"\1>", d)
+        d = re.sub(">>", ">", d)
+        d = re.sub('<<', '<', d)
+        d = re.sub("</", " </", d).split()
+#         d = d.split()
         sentence, label = gen_label(d)
-
-        # dang bi loi o day
         sentence = remove_tags(sentence)
-        list_sent = []
-        list_label = []
-        if len(sentence) == 0:
-            continue
-        if len(sentence) > SENT_LENGTH:
-            split_count += 1
-            temp = sentence[:int(len(sentence)/SENT_LENGTH)*SENT_LENGTH] + sentence[-SENT_LENGTH:]
-            label_temp = label[:int(len(sentence)/SENT_LENGTH)*SENT_LENGTH] + label[-SENT_LENGTH:]
-            temp = np.array(temp)
-            label_temp = np.array(label_temp)
-            list_sent += np.reshape(temp, (-1, SENT_LENGTH)).tolist()
-            list_label += np.reshape(label_temp, (-1, SENT_LENGTH)).tolist()
-        else:
-            list_sent.append(sentence)
-            list_label.append(label)
+        sentence = re.sub(r'<.*?>', '', ' '.join(sentence)).split()
+        sentence = np.array(sentence)
+        label = np.array(label)
+#         print(np.unique(label))
+        if label.shape != sentence.shape:
+            print(len(label), len(sentence))
+            print(label)
+            print(sentence)
+            print(data[i])
+        assert label.shape == sentence.shape
+        list_sent = windowing(sentence)
+        list_label = windowing(label)
+        assert len(list_label) == len(list_sent)
+        assert len(list_sent[0]) == len(list_label[0])
+
         for i in range(len(list_sent)):
             sentence = ' '.join(list_sent[i])
             l = list_label[i]
-            # sentence = phobert.extract_features_aligned_to_words(sentence)
-            # sentence = np.array([s.vector.detach().numpy() for s in sentence])[1:-1]
             manual_feat = extract(sentence.split())
+            char_list = sent_to_char(sentence.split())
             sentence = extract_bert(sentence)
-            sentence = np.append(sentence, manual_feat, 1)
+            sentence = np.hstack((sentence, manual_feat, char_list))
             pad_len = SENT_LENGTH - len(l)
             l += ['pad'] * (pad_len)
-            l = np.array(l)
+            l = np.array(l, dtype='<U12')
             sentence = np.append(sentence, np.zeros((pad_len, sentence.shape[1])), axis=0)
             X.append(sentence)
             y.append(l)
         #print(sentence.shape, label.shape, '\n')
-
-    return np.array(X), np.array(y)
+    return np.array(X), np.array(y, dtype='<U12')
 path = "new_data/"
-FJoin = os.path.join
-files = [FJoin(path, f) for f in os.listdir(path)]
-empty = True
+# FJoin = os.path.join
+files = os.listdir(path)
+# files = ['1.txt', '2.txtS']
 for f in files:
-    if f == 'new_data/2.txt':
-        X_test, y_test = read(f)
-        print("test", X_test.shape)
-        # np.save("X_test_128.npy", X_test)
-        # np.save("y_test_128.npy", y_test)
-        del X_test, y_test
-
-    else:
-        if empty:
-            X, y = read(f)
-            empty = False
-        else:
-            X_temp, y_temp = read(f)
-            X = np.append(X, X_temp, axis=0)
-            y = np.append(y, y_temp, axis=0)
-        print(X.shape, y.shape)
-    print(split_count)
-
-print(X.shape, y.shape)
-print(X[0])
-print(y[0])
-
-
-# np.save("X_128.npy", X)
-# np.save("y_128.npy", y)
+    X, y = read(path + f)
+    print(X.shape, y.shape, f)
+    np.save("X_{}.npy".format(f.split('.')[0]), X)
+    np.save("y_{}.npy".format(f.split('.')[0]), y)
+    del X, y
 
 
 
-
-# Input
-# sentence = sentence.replace('_', ' ')
-# # To perform word segmentation only
-# sentence = rdrsegmenter.tokenize(sentence)
-# sentence = [x for sublist in sentence for x in sublist]
-# sentence = ' '.join(sentence)
-# sentence = sentence.replace('< / ', '</').replace('< ', '<').replace(' >', '>')
-# print(sentence)
-# sentence = phobert.extract_features_aligned_to_words(' '.join(sentence))
-# sentence = np.array([s.vector.detach().numpy() for s in sentence])[1:-1]
-# print(len(sentence))
-import torch
-
-# Load PhoBERT-base in fairseq
 
