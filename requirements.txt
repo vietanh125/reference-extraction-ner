@@ -36,7 +36,7 @@ beautifulsoup4==4.7.1
 bert-embedding==1.0.1
 bitarray==0.8.3
 bkcharts==0.2
-bleach==3.1.0
+bleach==3.3.0
 blinker==1.4
 blis==0.2.4
 bokeh==1.0.4
