@@ -111,4 +111,4 @@ def extract_bert(line):
     feat = align_features_to_words(phobert, last_layer_features, alignment)
     return feat
 
-print(extract_bert("Tôi là sinh_viên trường Lở_mồm_long_móng .").shape)
+print(extract_bert("Tôi là sinh_viên trường PTIT .").shape)
