@@ -382,7 +382,7 @@ responses==0.5.1
 rfc3986==1.3.2
 rocketchat-API==0.6.32
 rope==0.12.0
-rsa==4.0
+rsa==4.7
 ruamel-yaml==0.15.46
 s3transfer==0.2.1
 sacrebleu==1.4.9
