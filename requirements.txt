@@ -113,7 +113,7 @@ ffmpeg-python==0.2.0
 filelock==3.0.10
 Flask==1.1.1
 Flask-Admin==1.5.0
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 Flask-HTTPAuth==3.3.0
 Flask-JWT-Simple==0.0.3
 Flask-Migrate==2.0.3
