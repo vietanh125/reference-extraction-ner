@@ -474,7 +474,7 @@ unicodecsv==0.14.1
 unpyclib==0.8.1
 unrar==0.4
 uritemplate==3.0.0
-urllib3==1.24.2
+urllib3==1.26.5
 uuid==1.30
 uvloop==0.12.2
 validators==0.14.1
