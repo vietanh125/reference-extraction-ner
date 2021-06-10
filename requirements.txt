@@ -80,7 +80,7 @@ dicttoxml==1.7.4
 dill==0.2.9
 Distance==0.1.3
 distributed==1.26.0
-Django==2.1
+Django==2.2.24
 django-cors-headers==2.4.0
 djangorestframework==3.8.2
 dnspython==1.16.0
