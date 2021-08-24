@@ -54,7 +54,8 @@ def gen_label(tokenized_list):
 
         else:
             if token[0:2] == '</':
-                stack.pop()
+                if len(stack) > 0:
+                    stack.pop()
             else:
                 stack.append(remove_accents(token[1:-1]))
                 is_capital = True
