@@ -258,7 +258,7 @@ oauthlib==3.1.0
 olefile==0.46
 opencv-contrib-python==4.0.0.21
 opencv-python==4.1.2.30
-opencv-python-headless==4.1.0.25
+opencv-python-headless==4.2.0.32
 openpyxl==2.6.1
 opt-einsum==3.1.0
 packaging==19.2
