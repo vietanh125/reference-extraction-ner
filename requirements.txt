@@ -466,7 +466,7 @@ tqdm==4.31.1
 traitlets==4.3.2
 translate==3.5.0
 twilio==6.29.0
-Twisted==19.7.0
+Twisted==22.1.0
 typing==3.6.6
 tzlocal==1.5.1
 ujson==1.35
