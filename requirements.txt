@@ -469,7 +469,7 @@ twilio==6.29.0
 Twisted==19.7.0
 typing==3.6.6
 tzlocal==1.5.1
-ujson==1.35
+ujson==5.2.0
 unicodecsv==0.14.1
 unpyclib==0.8.1
 unrar==0.4
