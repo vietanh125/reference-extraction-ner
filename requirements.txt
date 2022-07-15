@@ -79,7 +79,7 @@ detectron2==0.1.2+cu101
 dicttoxml==1.7.4
 dill==0.2.9
 Distance==0.1.3
-distributed==1.26.0
+distributed==2021.10.0
 Django==2.1
 django-cors-headers==2.4.0
 djangorestframework==3.8.2
