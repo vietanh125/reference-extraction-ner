@@ -220,7 +220,7 @@ llvmlite==0.28.0
 lmdb==0.98
 locket==0.2.0
 lxml==4.2.4
-Mako==1.0.13
+Mako==1.2.2
 Markdown==3.0.1
 markdown2==2.3.8
 MarkupSafe==1.1.1
